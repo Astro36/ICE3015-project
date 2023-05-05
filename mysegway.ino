@@ -1,4 +1,6 @@
-#define F_CPU 160000000
+#define F_CPU 16000000
+
+#include <math.h>
 
 #define _PORTMUX (*(volatile unsigned short*) 0x05E0)
 #define _PORTMUX_TWISPIROUTEA (*(volatile unsigned short*) (0x05E0 + 0x03))
@@ -25,23 +27,19 @@
 #define _TWI_READ true
 #define _TWI_WRITE false
 
-#define MPU6050_ACC_RANGE 16384
-#define MPU6050_AX_OFFSET (short) 0
-#define MPU6050_AY_OFFSET (short) 0
-#define MPU6050_AZ_OFFSET (short) 0
-#define MPU6050_GX_OFFSET (short) 0
-#define MPU6050_GY_OFFSET (short) 0
-#define MPU6050_GZ_OFFSET (short) 0
+#define MPU6050 0x68
+#define MPU6050_ACCEL_XOUT_H 0x3b
+#define MPU6050_PWR_MGMT_1 0x6b
+#define MPU6050_CLOCK_PLL_XGYRO_bm 0b00000001
 
+#define PI 3.141592
+#define ALPHA 0.96
+
+#define MPU6050_ACC_RANGE 16384
 #define MPU6050_GYRO_CONFIG 0x1b
 #define MPU6050_GYRO_FS_250_bm 0b00000000
 #define MPU6050_ACCEL_CONFIG 0x1c
 #define MPU6050_ACCEL_FS_2 0b00000000
-
-#define MPU6050_ACCEL_XOUT_H 0x3b
-
-#define MPU6050_PWR_MGMT_1 0x6b
-#define MPU6050_CLOCK_PLL_XGYRO_bm 0b00000001
 
 void _twi_init();
 bool _twi_start(unsigned char device, bool read);
@@ -58,7 +56,7 @@ void tcb1_swap_pin();
 void tcb1_set_duty();
 
 void mpu6050_init();
-void mpu6050_fetch(float* ax, float* ay, float* az, float* gx, float* gy, float* gz); // 자이로 가속도 정보 요청
+void mpu6050_fetch(short* raw_ax, short* raw_ay, short* raw_az, short* raw_gx, short* raw_gy, short* raw_gz); // 자이로 가속도 정보 요청
 
 void mx1508_init();
 void mx1508_run(); // 모터 드라이버 속도 제어
@@ -66,20 +64,48 @@ void mx1508_run(); // 모터 드라이버 속도 제어
 void hcsr04_init();
 void hcsr04_fetch(); // 거리 정보 요청
 
-void complementary_filter(float* yaw, float* pitch, float* roll, float ax, float ay, float az, float gx, float gy, float gz);
 void pid_controller();
 
+float mpu6050_offsets[6];
+unsigned long previous_millis;
+float angle_ax, angle_ay, angle_gx, angle_gy, angle_x, angle_y;
+
 void setup() {
+    Serial.begin(9600); // debug
     _twi_init();
     mpu6050_init();
 }
 
 void loop() {
-    float ax, ay, az, gx, gy, gz;
-    mpu6050_fetch(&ax, &ay, &az, &gx, &gy, &gz);
+    // calculate dt
+    unsigned long now = millis();
+    float dt = (now - previous_millis) / 1000.0; // [sec]
+    previous_millis = now;
 
-    float yaw, pitch, roll;
-    complementary_filter(&yaw, &pitch, &roll, ax, ay, az, gx, gy, gz);
+    // fetch sensor data
+    short raw_ax, raw_ay, raw_az, raw_gx, raw_gy, raw_gz;
+    mpu6050_fetch(&raw_ax, &raw_ay, &raw_az, &raw_gx, &raw_gy, &raw_gz);
+
+    // calculate angle by accel data
+    float ax = (float) raw_ax - mpu6050_offsets[0];
+    float ay = (float) raw_ay - mpu6050_offsets[1] + 16384;
+    float az = (float) raw_az - mpu6050_offsets[2];
+    angle_ax = atan(ay / sqrt(ax * ax + az * az)) * (180 / PI);
+    angle_ay = atan(sqrt(ay * ay + az * az) / ax) * (180 / PI);
+    Serial.println("loop accel:");
+    Serial.println(angle_ax);
+    Serial.println(angle_ay);
+
+    // calculate angle by gyro data
+    angle_gx += (float) (raw_gx - mpu6050_offsets[3]) / 131 * dt;
+    angle_gy += (float) (raw_gy - mpu6050_offsets[4]) / 131 * dt;
+    Serial.println("loop gyro:");
+    Serial.println(angle_gx);
+    Serial.println(angle_gy);
+
+    // complementary filter
+    angle_x = ALPHA * (angle_x + angle_gx * dt) + (1 - ALPHA) * angle_ax;
+    angle_y = ALPHA * (angle_y + angle_gy * dt) + (1 - ALPHA) * angle_ay;
 }
 
 void _twi_init() {
@@ -147,40 +173,52 @@ void tcb1_set_duty();
 
 void mpu6050_init() {
     // clock source
-    _twi_start(0x00, _TWI_WRITE);
+    _twi_start(MPU6050, _TWI_WRITE);
     _twi_write(MPU6050_PWR_MGMT_1); // reg address
     _twi_stop();
-    _twi_start(0x00, _TWI_READ);
+    _twi_start(MPU6050, _TWI_READ);
     unsigned char pwr_mgmt_1;
-    _twi_read(&pwr_mgmt_1, true);
+    _twi_read(&pwr_mgmt_1, true); // reg value
     _twi_stop();
     pwr_mgmt_1 |= MPU6050_CLOCK_PLL_XGYRO_bm;
-    _twi_start(0x00, _TWI_WRITE);
+    _twi_start(MPU6050, _TWI_WRITE);
     _twi_write(MPU6050_PWR_MGMT_1); // reg address
     _twi_write(pwr_mgmt_1); // reg value
     _twi_stop();
+
+    // init sensor offset
+    short sum[6];
+    for (int i = 0; i < 10; i += 1) {
+        short raw_ax, raw_ay, raw_az, raw_gx, raw_gy, raw_gz;
+        mpu6050_fetch(&raw_ax, &raw_ay, &raw_az, &raw_gx, &raw_gy, &raw_gz);
+        sum[0] += raw_ax;
+        sum[1] += raw_ay;
+        sum[2] += raw_az;
+        sum[3] += raw_gx;
+        sum[4] += raw_gy;
+        sum[5] += raw_gz;
+    }
+    for (int i = 0; i < 6; i += 1) {
+        mpu6050_offsets[i] = (float) sum[i] / 10;
+    }
 }
 
-void mpu6050_fetch(unsigned char dev, float* ax, float* ay, float* az, float* gx, float* gy, float* gz) {
+void mpu6050_fetch(unsigned char dev, short* raw_ax, short* raw_ay, short* raw_az, short* raw_gx, short* raw_gy, short* raw_gz) {
     unsigned char buf[14];
     for (int i = 0; i < 14; i += 1) {
-        _twi_start(0x00, _TWI_WRITE);
+        _twi_start(MPU6050, _TWI_WRITE);
         _twi_write(MPU6050_ACCEL_XOUT_H + i); // reg address
         _twi_stop();
-        _twi_start(0x00, _TWI_READ);
-        _twi_read(&buf[i], i == 13);
+        _twi_start(MPU6050, _TWI_READ);
+        _twi_read(&buf[i], i == 13); // reg value
         _twi_stop();
     }
-    short raw_ax = (((short) buf[0]) << 8) | buf[1];
-    short raw_ay = (((short) buf[2]) << 8) | buf[3];
-    short raw_az = (((short) buf[4]) << 8) | buf[5];
-    short raw_gx = (((short) buf[8]) << 8) | buf[9];
-    short raw_gy = (((short) buf[10]) << 8) | buf[11];
-    short raw_gz = (((short) buf[12]) << 8) | buf[13];
-
-    *ax = (float) raw_ax / MPU6050_ACC_RANGE;
-    *ay = (float) raw_ay / MPU6050_ACC_RANGE;
-    *az = (float) raw_az / MPU6050_ACC_RANGE;
+    *raw_ax = (((short) buf[0]) << 8) | buf[1];
+    *raw_ay = (((short) buf[2]) << 8) | buf[3];
+    *raw_az = (((short) buf[4]) << 8) | buf[5];
+    *raw_gx = (((short) buf[8]) << 8) | buf[9];
+    *raw_gy = (((short) buf[10]) << 8) | buf[11];
+    *raw_gz = (((short) buf[12]) << 8) | buf[13];
 }
 
 void mx1508_init();
@@ -189,6 +227,4 @@ void mx1508_run();
 void hcsr04_init();
 void hcsr04_fetch();
 
-void complementary_filter(float* yaw, float* pitch, float* roll, float ax, float ay, float az, float gx, float gy, float gz) {
-}
 void pid_controller();
