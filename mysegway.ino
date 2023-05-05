@@ -43,6 +43,9 @@
 
 #define PI 3.141592
 #define ALPHA 0.96
+#define KP 5.0
+#define KI 3.0
+#define KD 3.0
 
 #define MPU6050_ACC_RANGE 16384
 #define MPU6050_GYRO_CONFIG 0x1b
@@ -73,11 +76,10 @@ void mx1508_run(); // 모터 드라이버 속도 제어
 void hcsr04_init();
 void hcsr04_fetch(); // 거리 정보 요청
 
-void pid_controller();
-
 float mpu6050_offsets[6];
 unsigned long previous_millis;
 float angle_ax, angle_ay, angle_gx, angle_gy, angle_x, angle_y;
+float pid_prev_err, pid_i_err;
 
 void setup() {
     Serial.begin(9600); // debug
@@ -116,7 +118,13 @@ void loop() {
     angle_x = ALPHA * (angle_x + angle_gx * dt) + (1 - ALPHA) * angle_ax; // use only `angle_x`
     angle_y = ALPHA * (angle_y + angle_gy * dt) + (1 - ALPHA) * angle_ay; // unused
 
-
+    // pid controller
+    float sp = 0; // setpoint; fetch from HC-SR04
+    float pid_err = sp - angle_x;
+    pid_i_err += pid_err * dt;
+    float pid_d_err = (pid_err - pid_prev_err) / dt;
+    pid_prev_err = pid_err;
+    float pv = KP * pid_err + KI * pid_i_err + KD * pid_d_err;
 }
 
 void _twi_init() {
@@ -257,5 +265,3 @@ void hcsr04_fetch() {
     unsigned long width_right = 0;
     float distance_right = width_right / 58;
 }
-
-void pid_controller();
