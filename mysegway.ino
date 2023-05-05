@@ -2,6 +2,15 @@
 
 #include <math.h>
 
+#define _PORTA (*(volatile unsigned short*) 0x0400)
+#define _PORTA_DIR (*(volatile unsigned short*) (0x0400 + 0x00))
+#define _PORTA_OUT (*(volatile unsigned short*) (0x0400 + 0x04))
+#define _PORTC (*(volatile unsigned short*) 0x0440)
+#define _PORTC_DIR (*(volatile unsigned short*) (0x0440 + 0x00))
+#define _PORTC_OUT (*(volatile unsigned short*) (0x0440 + 0x04))
+#define _PORTF (*(volatile unsigned short*) 0x04A0)
+#define _PORTF_DIR (*(volatile unsigned short*) (0x04A0 + 0x00))
+#define _PORTF_OUT (*(volatile unsigned short*) (0x04A0 + 0x04))
 #define _PORTMUX (*(volatile unsigned short*) 0x05E0)
 #define _PORTMUX_TWISPIROUTEA (*(volatile unsigned short*) (0x05E0 + 0x03))
 #define _PORTMUX_TWI0_ALT2_bm (unsigned char) 0b00100000
@@ -72,12 +81,12 @@ float angle_ax, angle_ay, angle_gx, angle_gy, angle_x, angle_y;
 
 void setup() {
     Serial.begin(9600); // debug
-    _twi_init();
     mpu6050_init();
+    hcsr04_init();
 }
 
 void loop() {
-    // calculate dt
+    // calculate `dt`
     unsigned long now = millis();
     float dt = (now - previous_millis) / 1000.0; // [sec]
     previous_millis = now;
@@ -104,8 +113,10 @@ void loop() {
     Serial.println(angle_gy);
 
     // complementary filter
-    angle_x = ALPHA * (angle_x + angle_gx * dt) + (1 - ALPHA) * angle_ax;
-    angle_y = ALPHA * (angle_y + angle_gy * dt) + (1 - ALPHA) * angle_ay;
+    angle_x = ALPHA * (angle_x + angle_gx * dt) + (1 - ALPHA) * angle_ax; // use only `angle_x`
+    angle_y = ALPHA * (angle_y + angle_gy * dt) + (1 - ALPHA) * angle_ay; // unused
+
+
 }
 
 void _twi_init() {
@@ -172,7 +183,9 @@ void tcb1_swap_pin();
 void tcb1_set_duty();
 
 void mpu6050_init() {
-    // clock source
+    _twi_init();
+
+    // set clock source
     _twi_start(MPU6050, _TWI_WRITE);
     _twi_write(MPU6050_PWR_MGMT_1); // reg address
     _twi_stop();
@@ -203,7 +216,7 @@ void mpu6050_init() {
     }
 }
 
-void mpu6050_fetch(unsigned char dev, short* raw_ax, short* raw_ay, short* raw_az, short* raw_gx, short* raw_gy, short* raw_gz) {
+void mpu6050_fetch(short* raw_ax, short* raw_ay, short* raw_az, short* raw_gx, short* raw_gy, short* raw_gz) {
     unsigned char buf[14];
     for (int i = 0; i < 14; i += 1) {
         _twi_start(MPU6050, _TWI_WRITE);
@@ -224,7 +237,25 @@ void mpu6050_fetch(unsigned char dev, short* raw_ax, short* raw_ay, short* raw_a
 void mx1508_init();
 void mx1508_run();
 
-void hcsr04_init();
-void hcsr04_fetch();
+void hcsr04_init() {
+    _PORTA_DIR |= 0b00000010; // PA1: OUTPUT, PA0: INPUT
+    _PORTF_DIR |= 0b00001000; // PF3: OUTPUT, PF2: INPUT
+}
+
+void hcsr04_fetch() {
+    _PORTA_OUT |= 0b00000010; // PA1: HIGH
+    delayMicroseconds(10);
+    _PORTA_OUT &= ~0b00000010; // PA1: LOW
+
+    unsigned long width_left = 0;
+    float distance_left = width_left / 58;
+
+    _PORTF_OUT |= 0b00001000; // PF3: HIGH
+    delayMicroseconds(10);
+    _PORTF_OUT &= ~0b00001000; // PF3: LOW
+
+    unsigned long width_right = 0;
+    float distance_right = width_right / 58;
+}
 
 void pid_controller();
