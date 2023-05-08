@@ -14,6 +14,9 @@
 #define _PORTMUX (*(volatile unsigned short*) 0x05E0)
 #define _PORTMUX_TWISPIROUTEA (*(volatile unsigned short*) (0x05E0 + 0x03))
 #define _PORTMUX_TWI0_ALT2_bm (unsigned char) 0b00100000
+#define _PORTMUX_TCBROUTEA (*(volatile unsigned short*) (0x05E0 + 0x05))
+#define _PORTMUX_TCB1_ALT1_gc (unsigned char) 0b00000010
+#define _PORTMUX_TCB0_ALT1_gc (unsigned char) 0b00000001
 
 #define _TWI0 (*(volatile unsigned short*) 0x08A0)
 #define _TWI0_MCTRLA (*(volatile unsigned short*) (0x08A0 + 0x03))
@@ -33,6 +36,21 @@
 #define _TWI0_MADDR (*(volatile unsigned short*) (0x08A0 + 0x07))
 #define _TWI0_MDATA (*(volatile unsigned short*) (0x08A0 + 0x08))
 
+#define _TCB0 (*(volatile unsigned short*) 0x0A80)
+#define _TCB0_CTRLA (*(volatile unsigned short*) (0x0A80 + 0x00))
+#define _TCB_CLKSEL_CLKDIV2_gc (unsigned char) 0b00000010
+#define _TCB_ENABLE_bm (unsigned char) 0b00000001
+#define _TCB0_CTRLB (*(volatile unsigned short*) (0x0A80 + 0x01))
+#define _TCB_CCMPEN_bm (unsigned char) 0b00000111
+#define _TCB_CNTMODE_PWM8_gc (unsigned char) 0b00010000
+#define _TCB0_CCMPL (*(volatile unsigned short*) (0x0A80 + 0x0C))
+#define _TCB0_CCMPH (*(volatile unsigned short*) (0x0A80 + 0x0D))
+#define _TCB1 (*(volatile unsigned short*) 0x0A90)
+#define _TCB1_CTRLA (*(volatile unsigned short*) (0x0A90 + 0x00))
+#define _TCB1_CTRLB (*(volatile unsigned short*) (0x0A90 + 0x01))
+#define _TCB1_CCMPL (*(volatile unsigned short*) (0x0A90 + 0x0C))
+#define _TCB1_CCMPH (*(volatile unsigned short*) (0x0A90 + 0x0D))
+
 #define _TWI_READ true
 #define _TWI_WRITE false
 
@@ -47,11 +65,11 @@
 #define KI 3.0
 #define KD 3.0
 
-#define MPU6050_ACC_RANGE 16384
-#define MPU6050_GYRO_CONFIG 0x1b
-#define MPU6050_GYRO_FS_250_bm 0b00000000
-#define MPU6050_ACCEL_CONFIG 0x1c
-#define MPU6050_ACCEL_FS_2 0b00000000
+// #define MPU6050_ACC_RANGE 16384
+// #define MPU6050_GYRO_CONFIG 0x1b
+// #define MPU6050_GYRO_FS_250_bm 0b00000000
+// #define MPU6050_ACCEL_CONFIG 0x1c
+// #define MPU6050_ACCEL_FS_2 0b00000000
 
 void _twi_init();
 bool _twi_start(unsigned char device, bool read);
@@ -59,19 +77,21 @@ void _twi_stop();
 bool _twi_read(unsigned char* data, bool last);
 bool _twi_write(unsigned char data);
 
-void tcb0_init();
-void tcb0_swap_pin();
-void tcb0_set_duty();
-
-void tcb1_init();
-void tcb1_swap_pin();
-void tcb1_set_duty();
+void _tcb0_init();
+void _tcb0_default_pin();
+void _tcb0_alt_pin();
+void _tcb0_set_duty(unsigned char duty);
+void _tcb1_init();
+void _tcb1_default_pin();
+void _tcb1_alt_pin();
+void _tcb1_set_duty(unsigned char duty);
 
 void mpu6050_init();
 void mpu6050_fetch(short* raw_ax, short* raw_ay, short* raw_az, short* raw_gx, short* raw_gy, short* raw_gz); // 자이로 가속도 정보 요청
 
 void mx1508_init();
-void mx1508_run(); // 모터 드라이버 속도 제어
+void mx1508_left_run(); // 모터 드라이버 속도 제어
+void mx1508_right_run(); // 모터 드라이버 속도 제어
 
 void hcsr04_init();
 void hcsr04_fetch(); // 거리 정보 요청
@@ -84,6 +104,7 @@ float pid_prev_err, pid_i_err;
 void setup() {
     Serial.begin(9600); // debug
     mpu6050_init();
+    mx1508_init();
     hcsr04_init();
 }
 
@@ -125,6 +146,10 @@ void loop() {
     float pid_d_err = (pid_err - pid_prev_err) / dt;
     pid_prev_err = pid_err;
     float pv = KP * pid_err + KI * pid_i_err + KD * pid_d_err;
+
+    // run pwm motor
+    mx1508_left_run(pv);
+    mx1508_right_run(pv);
 }
 
 void _twi_init() {
@@ -182,13 +207,51 @@ bool _twi_write(unsigned char data) {
     return !(_TWI0_MSTATUS & _TWI_RXACK_bm); // check ACK
 }
 
-void tcb0_init();
-void tcb0_swap_pin();
-void tcb0_set_duty();
+void _tcb0_init() {
+    _PORTA_DIR |= 0b00000100; // PA2: OUTPUT
+    _PORTF_DIR |= 0b00010000; // PF4: OUTPUT
+    _TCB0_CCMPH = 0x00; // Duty
+    _TCB0_CCMPL = 0xff; // TOP
+    _TCB0_CTRLA |= _TCB_CLKSEL_CLKDIV2_gc | _TCB_ENABLE_bm;
+    _TCB0_CTRLB |= _TCB_CCMPEN_bm | _TCB_CNTMODE_PWM8_gc;
+}
 
-void tcb1_init();
-void tcb1_swap_pin();
-void tcb1_set_duty();
+void _tcb0_default_pin() {
+    _PORTMUX_TCBROUTEA &= ~_PORTMUX_TCB0_ALT1_gc;
+    _PORTF_OUT &= ~0b00010000; // PF4: LOW
+}
+
+void _tcb0_alt_pin() {
+    _PORTMUX_TCBROUTEA |= _PORTMUX_TCB0_ALT1_gc;
+    _PORTA_OUT &= ~0b00000100; // PA2: LOW
+}
+
+void _tcb0_set_duty(unsigned char duty) {
+    _TCB0_CCMPH = duty;
+}
+
+void _tcb1_init() {
+    _PORTA_DIR |= 0b00001000; // PA3: OUTPUT
+    _PORTF_DIR |= 0b00100000; // PF5: OUTPUT
+    _TCB1_CCMPH = 0x00; // Duty
+    _TCB1_CCMPL = 0xff; // TOP
+    _TCB1_CTRLA |= _TCB_CLKSEL_CLKDIV2_gc | _TCB_ENABLE_bm;
+    _TCB1_CTRLB |= _TCB_CCMPEN_bm | _TCB_CNTMODE_PWM8_gc;
+}
+
+void _tcb1_default_pin() {
+    _PORTMUX_TCBROUTEA &= ~_PORTMUX_TCB1_ALT1_gc;
+    _PORTF_OUT &= ~0b00100000; // PF5: LOW
+}
+
+void _tcb1_alt_pin() {
+    _PORTMUX_TCBROUTEA |= _PORTMUX_TCB1_ALT1_gc;
+    _PORTA_OUT &= ~0b00001000; // PA3: LOW
+}
+
+void _tcb1_set_duty(unsigned char duty) {
+    _TCB1_CCMPH = duty;
+}
 
 void mpu6050_init() {
     _twi_init();
@@ -242,8 +305,30 @@ void mpu6050_fetch(short* raw_ax, short* raw_ay, short* raw_az, short* raw_gx, s
     *raw_gz = (((short) buf[12]) << 8) | buf[13];
 }
 
-void mx1508_init();
-void mx1508_run();
+void mx1508_init() {
+    _tcb0_init();
+    _tcb1_init();
+}
+
+void mx1508_left_run(float power) {
+    if (power >= 0) {
+        _tcb0_default_pin();
+        _tcb0_set_duty((unsigned char) power);
+    } else {
+        _tcb0_alt_pin();
+        _tcb0_set_duty((unsigned char) -power);
+    }
+}
+
+void mx1508_right_run(float power) {
+    if (power >= 0) {
+        _tcb1_default_pin();
+        _tcb1_set_duty((unsigned char) power);
+    } else {
+        _tcb1_alt_pin();
+        _tcb1_set_duty((unsigned char) -power);
+    }
+}
 
 void hcsr04_init() {
     _PORTA_DIR |= 0b00000010; // PA1: OUTPUT, PA0: INPUT
