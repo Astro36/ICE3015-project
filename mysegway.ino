@@ -294,7 +294,7 @@ void mpu6050_fetch(short* raw_ax, short* raw_ay, short* raw_az, short* raw_gx, s
         _twi_write(MPU6050_ACCEL_XOUT_H + i); // reg address
         _twi_stop();
         _twi_start(MPU6050, _TWI_READ);
-        _twi_read(&buf[i], i == 13); // reg value
+        _twi_read(&buf[i], true); // reg value
         _twi_stop();
     }
     *raw_ax = (((short) buf[0]) << 8) | buf[1];
