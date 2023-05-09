@@ -2,54 +2,54 @@
 
 #include <math.h>
 
-#define _PORTA (*(volatile unsigned short*) 0x0400)
-#define _PORTA_DIR (*(volatile unsigned short*) (0x0400 + 0x00))
-#define _PORTA_OUT (*(volatile unsigned short*) (0x0400 + 0x04))
-#define _PORTC (*(volatile unsigned short*) 0x0440)
-#define _PORTC_DIR (*(volatile unsigned short*) (0x0440 + 0x00))
-#define _PORTC_OUT (*(volatile unsigned short*) (0x0440 + 0x04))
-#define _PORTF (*(volatile unsigned short*) 0x04A0)
-#define _PORTF_DIR (*(volatile unsigned short*) (0x04A0 + 0x00))
-#define _PORTF_OUT (*(volatile unsigned short*) (0x04A0 + 0x04))
-#define _PORTMUX (*(volatile unsigned short*) 0x05E0)
-#define _PORTMUX_TWISPIROUTEA (*(volatile unsigned short*) (0x05E0 + 0x03))
-#define _PORTMUX_TWI0_ALT2_bm (unsigned char) 0b00100000
-#define _PORTMUX_TCBROUTEA (*(volatile unsigned short*) (0x05E0 + 0x05))
-#define _PORTMUX_TCB1_ALT1_gc (unsigned char) 0b00000010
-#define _PORTMUX_TCB0_ALT1_gc (unsigned char) 0b00000001
+#define _PORTA (*(volatile unsigned char*) 0x0400)
+#define _PORTA_DIR (*(volatile unsigned char*) (0x0400 + 0x00))
+#define _PORTA_OUT (*(volatile unsigned char*) (0x0400 + 0x04))
+#define _PORTC (*(volatile unsigned char*) 0x0440)
+#define _PORTC_DIR (*(volatile unsigned char*) (0x0440 + 0x00))
+#define _PORTC_OUT (*(volatile unsigned char*) (0x0440 + 0x04))
+#define _PORTF (*(volatile unsigned char*) 0x04A0)
+#define _PORTF_DIR (*(volatile unsigned char*) (0x04A0 + 0x00))
+#define _PORTF_OUT (*(volatile unsigned char*) (0x04A0 + 0x04))
+#define _PORTMUX (*(volatile unsigned char*) 0x05E0)
+#define _PORTMUX_TWISPIROUTEA (*(volatile unsigned char*) (0x05E0 + 0x03))
+#define _PORTMUX_TWI0_ALT2_bm ((unsigned char) 0b00100000)
+#define _PORTMUX_TCBROUTEA (*(volatile unsigned char*) (0x05E0 + 0x05))
+#define _PORTMUX_TCB1_ALT1_gc ((unsigned char) 0b00000010)
+#define _PORTMUX_TCB0_ALT1_gc ((unsigned char) 0b00000001)
 
-#define _TWI0 (*(volatile unsigned short*) 0x08A0)
-#define _TWI0_MCTRLA (*(volatile unsigned short*) (0x08A0 + 0x03))
-#define _TWI_ENABLE_bm (unsigned char) 0b00000001
-#define _TWI0_MCTRLB (*(volatile unsigned short*) (0x08A0 + 0x04))
-#define _TWI_ACKACT_bm (unsigned char) 0b00000100
-#define _TWI_MCMD_RECVTRANS_gc (unsigned char) 0b00000010
-#define _TWI_MCMD_STOP_gc (unsigned char) 0b00000011
-#define _TWI0_MSTATUS (*(volatile unsigned short*) (0x08A0 + 0x05))
-#define _TWI_RIF_bm (unsigned char) 0b10000000
-#define _TWI_WIF_bm (unsigned char) 0b01000000
-#define _TWI_RXACK_bm (unsigned char) 0b00010000
-#define _TWI_ARBLOST_bm (unsigned char) 0b00001000
-#define _TWI_BUSERR_bm (unsigned char) 0b00000100
-#define _TWI_BUSSTATE_IDLE_bm (unsigned char) 0b00000001
-#define _TWI0_MBAUD (*(volatile unsigned short*) (0x08A0 + 0x06))
-#define _TWI0_MADDR (*(volatile unsigned short*) (0x08A0 + 0x07))
-#define _TWI0_MDATA (*(volatile unsigned short*) (0x08A0 + 0x08))
+#define _TWI0 (*(volatile unsigned char*) 0x08A0)
+#define _TWI0_MCTRLA (*(volatile unsigned char*) (0x08A0 + 0x03))
+#define _TWI_ENABLE_bm ((unsigned char) 0b00000001)
+#define _TWI0_MCTRLB (*(volatile unsigned char*) (0x08A0 + 0x04))
+#define _TWI_ACKACT_bm ((unsigned char) 0b00000100)
+#define _TWI_MCMD_RECVTRANS_gc ((unsigned char) 0b00000010)
+#define _TWI_MCMD_STOP_gc ((unsigned char) 0b00000011)
+#define _TWI0_MSTATUS (*(volatile unsigned char*) (0x08A0 + 0x05))
+#define _TWI_RIF_bm ((unsigned char) 0b10000000)
+#define _TWI_WIF_bm ((unsigned char) 0b01000000)
+#define _TWI_RXACK_bm ((unsigned char) 0b00010000)
+#define _TWI_ARBLOST_bm ((unsigned char) 0b00001000)
+#define _TWI_BUSERR_bm ((unsigned char) 0b00000100)
+#define _TWI_BUSSTATE_IDLE_bm ((unsigned char) 0b00000001)
+#define _TWI0_MBAUD (*(volatile unsigned char*) (0x08A0 + 0x06))
+#define _TWI0_MADDR (*(volatile unsigned char*) (0x08A0 + 0x07))
+#define _TWI0_MDATA (*(volatile unsigned char*) (0x08A0 + 0x08))
 
-#define _TCB0 (*(volatile unsigned short*) 0x0A80)
-#define _TCB0_CTRLA (*(volatile unsigned short*) (0x0A80 + 0x00))
-#define _TCB_CLKSEL_CLKDIV2_gc (unsigned char) 0b00000010
-#define _TCB_ENABLE_bm (unsigned char) 0b00000001
-#define _TCB0_CTRLB (*(volatile unsigned short*) (0x0A80 + 0x01))
-#define _TCB_CCMPEN_bm (unsigned char) 0b00000111
+#define _TCB0 (*(volatile unsigned char*) 0x0A80)
+#define _TCB0_CTRLA (*(volatile unsigned char*) (0x0A80 + 0x00))
+#define _TCB_CLKSEL_CLKDIV2_gc ((unsigned char) 0b00000010)
+#define _TCB_ENABLE_bm ((unsigned char) 0b00000001)
+#define _TCB0_CTRLB (*(volatile unsigned char*) (0x0A80 + 0x01))
+#define _TCB_CCMPEN_bm ((unsigned char) 0b00000111)
 #define _TCB_CNTMODE_PWM8_gc (unsigned char) 0b00010000
-#define _TCB0_CCMPL (*(volatile unsigned short*) (0x0A80 + 0x0C))
-#define _TCB0_CCMPH (*(volatile unsigned short*) (0x0A80 + 0x0D))
-#define _TCB1 (*(volatile unsigned short*) 0x0A90)
-#define _TCB1_CTRLA (*(volatile unsigned short*) (0x0A90 + 0x00))
-#define _TCB1_CTRLB (*(volatile unsigned short*) (0x0A90 + 0x01))
-#define _TCB1_CCMPL (*(volatile unsigned short*) (0x0A90 + 0x0C))
-#define _TCB1_CCMPH (*(volatile unsigned short*) (0x0A90 + 0x0D))
+#define _TCB0_CCMPL (*(volatile unsigned char*) (0x0A80 + 0x0C))
+#define _TCB0_CCMPH (*(volatile unsigned char*) (0x0A80 + 0x0D))
+#define _TCB1 (*(volatile unsigned char*) 0x0A90)
+#define _TCB1_CTRLA (*(volatile unsigned char*) (0x0A90 + 0x00))
+#define _TCB1_CTRLB (*(volatile unsigned char*) (0x0A90 + 0x01))
+#define _TCB1_CCMPL (*(volatile unsigned char*) (0x0A90 + 0x0C))
+#define _TCB1_CCMPH (*(volatile unsigned char*) (0x0A90 + 0x0D))
 
 #define _TWI_READ true
 #define _TWI_WRITE false
@@ -102,13 +102,19 @@ float angle_ax, angle_ay, angle_gx, angle_gy, angle_x, angle_y;
 float pid_prev_err, pid_i_err;
 
 void setup() {
-    Serial.begin(9600); // debug
-    mpu6050_init();
+    Serial1.begin(9600); // debug
+    mpu6050_init(); // 에러나면 락 걸림
     mx1508_init();
     hcsr04_init();
 }
 
 void loop() {
+    // debug
+    digitalWrite(7, HIGH);
+    delay(100);
+    digitalWrite(7, LOW);
+    delay(100);
+
     // calculate `dt`
     unsigned long now = millis();
     float dt = (now - previous_millis) / 1000.0; // [sec]
@@ -120,20 +126,20 @@ void loop() {
 
     // calculate angle by accel data
     float ax = (float) raw_ax - mpu6050_offsets[0];
-    float ay = (float) raw_ay - mpu6050_offsets[1] + 16384;
+    float ay = (float) raw_ay - mpu6050_offsets[1];
     float az = (float) raw_az - mpu6050_offsets[2];
     angle_ax = atan(ay / sqrt(ax * ax + az * az)) * (180 / PI);
     angle_ay = atan(sqrt(ay * ay + az * az) / ax) * (180 / PI);
-    Serial.println("loop accel:");
-    Serial.println(angle_ax);
-    Serial.println(angle_ay);
+    Serial1.println("loop accel:");
+    Serial1.println(angle_ax);
+    Serial1.println(angle_ay);
 
     // calculate angle by gyro data
     angle_gx += (float) (raw_gx - mpu6050_offsets[3]) / 131 * dt;
     angle_gy += (float) (raw_gy - mpu6050_offsets[4]) / 131 * dt;
-    Serial.println("loop gyro:");
-    Serial.println(angle_gx);
-    Serial.println(angle_gy);
+    Serial1.println("loop gyro:");
+    Serial1.println(angle_gx);
+    Serial1.println(angle_gy);
 
     // complementary filter
     angle_x = ALPHA * (angle_x + angle_gx * dt) + (1 - ALPHA) * angle_ax; // use only `angle_x`
