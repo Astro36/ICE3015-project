@@ -1,5 +1,8 @@
 #include "Wire.h" // This library allows you to communicate with I2C devices.
 
+#define _PORTMUX_TWISPIROUTEA (*(volatile unsigned char*) (0x05E0 + 0x03))
+#define _PORTMUX_TWI0_ALT2_bm ((unsigned char) 0b00100000)
+
 const int MPU_ADDR = 0x68; // I2C address of the MPU-6050. If AD0 pin is set to HIGH, the I2C address will be 0x69.
 int16_t accelerometer_x, accelerometer_y, accelerometer_z; // variables for accelerometer raw data
 int16_t gyro_x, gyro_y, gyro_z; // variables for gyro raw data
@@ -14,6 +17,8 @@ char* convert_int16_to_str(int16_t i) { // converts int16 to string. Moreover, r
 void setup() {
     Serial1.begin(9600);
     Wire.begin();
+    _PORTMUX_TWISPIROUTEA |= _PORTMUX_TWI0_ALT2_bm;
+
     Wire.beginTransmission(MPU_ADDR); // Begins a transmission to the I2C slave (GY-521 board)
     Wire.write(0x6B); // PWR_MGMT_1 register
     Wire.write(0); // set to zero (wakes up the MPU-6050)
