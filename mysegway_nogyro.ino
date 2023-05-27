@@ -92,11 +92,9 @@ void mpu6050_init();
 void mpu6050_fetch(short* raw_ax, short* raw_ay, short* raw_az, short* raw_gx, short* raw_gy, short* raw_gz); // 자이로 가속도 정보 요청
 
 void mx1508_init();
+unsigned char mx1508_map(float power);
 void mx1508_left_run(); // 모터 드라이버 속도 제어
 void mx1508_right_run(); // 모터 드라이버 속도 제어
-
-void hcsr04_init();
-void hcsr04_fetch(); // 거리 정보 요청
 
 short mpu6050_offsets[6];
 unsigned long previous_millis;
@@ -119,14 +117,13 @@ void setup() {
     Serial1.begin(9600); // debug
     mpu6050_init();
     mx1508_init();
-    hcsr04_init();
 }
 
 void loop() {
     // calculate `dt`
-    unsigned long now = millis();
-    float dt = (now - previous_millis) / 1000.0; // [sec]
-    previous_millis = now;
+    // unsigned long now = millis();
+    // float dt = (now - previous_millis) / 1000.0; // [sec]
+    // previous_millis = now;
 
     // fetch sensor data
     short raw_ax, raw_ay, raw_az, raw_gx, raw_gy, raw_gz;
@@ -157,20 +154,13 @@ void loop() {
     Serial1.print(short2str((short) pv));
     Serial1.println();
 
-    float max_pv = 127;
-    if (pv > max_pv) {
-        pv = max_pv;
-    } else if (pv < -max_pv) {
-        pv = -max_pv;
-    }
-
     // run pwm motor
     mx1508_left_run(pv);
     // mx1508_right_run(pv);
 }
 
 void _twi_init() {
-    _PORTMUX_TWISPIROUTEA |= _PORTMUX_TWI0_ALT2_bm;
+    _PORTMUX_TWISPIROUTEA |= _PORTMUX_TWI0_ALT2_bm; // PC2: SDA, PC3: SCL
     _PORTC_PIN2CTRL |= _PORTC_PIN2CTRL_PULLUPEN_bm; // PC2: PULLUP
     _PORTC_PIN3CTRL |= _PORTC_PIN3CTRL_PULLUPEN_bm; // PC3: PULLUP
 
@@ -329,43 +319,36 @@ void mx1508_init() {
     _tcb1_init();
 }
 
+unsigned char mx1508_map(float power) { // -float ~ float -> +-128 ~ +-255
+    if (power >= 0) {
+        if (power > 127) {
+            return 255;
+        }
+        return ((unsigned char) power) + 127;
+    } else {
+        if (power < -127) {
+            return -127;
+        }
+        return ((unsigned char) power) - 127;
+    }
+}
+
 void mx1508_left_run(float power) {
     if (power >= 0) {
         _tcb0_default_pin();
-        _tcb0_set_duty(((unsigned char) power) + 128);
+        _tcb0_set_duty(mx1508_map(power));
     } else {
         _tcb0_alt_pin();
-        _tcb0_set_duty(((unsigned char) -power) + 128);
+        _tcb0_set_duty(mx1508_map(power));
     }
 }
 
 void mx1508_right_run(float power) {
     if (power >= 0) {
         _tcb1_default_pin();
-        _tcb1_set_duty(((unsigned char) power) + 128);
+        _tcb1_set_duty(mx1508_map(power));
     } else {
         _tcb1_alt_pin();
-        _tcb1_set_duty(((unsigned char) -power) + 128);
+        _tcb1_set_duty(mx1508_map(power));
     }
-}
-
-void hcsr04_init() {
-    _PORTA_DIR |= 0b00000010; // PA1: OUTPUT, PA0: INPUT
-    _PORTF_DIR |= 0b00001000; // PF3: OUTPUT, PF2: INPUT
-}
-
-void hcsr04_fetch() {
-    _PORTA_OUT |= 0b00000010; // PA1: HIGH
-    delayMicroseconds(10);
-    _PORTA_OUT &= ~0b00000010; // PA1: LOW
-
-    unsigned long width_left = 0;
-    float distance_left = width_left / 58;
-
-    _PORTF_OUT |= 0b00001000; // PF3: HIGH
-    delayMicroseconds(10);
-    _PORTF_OUT &= ~0b00001000; // PF3: LOW
-
-    unsigned long width_right = 0;
-    float distance_right = width_right / 58;
 }
