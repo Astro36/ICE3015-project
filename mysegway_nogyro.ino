@@ -64,7 +64,7 @@
 #define MPU6050_CLOCK_PLL_XGYRO_bm 0b00000001
 
 #define PI 3.141592
-#define KP 5.0
+#define KP 20.0
 #define KD 1.5
 
 // #define MPU6050_ACC_RANGE 16384
@@ -142,22 +142,22 @@ void loop() {
     // pid controller
     float sp = 0; // setpoint; fetch from HC-SR04
     float pid_err = sp - angle_x;
-    float pid_d_err = (pid_err - pid_prev_err) / dt;
+    // float pid_d_err = (pid_err - pid_prev_err) / dt;
     pid_prev_err = pid_err;
-    float pv = KP * pid_err + KD * pid_d_err;
+    float pv = KP * pid_err + KD; //* pid_d_err;
 
     // debug
-    Serial1.print("angle_x=");
-    Serial1.print(float2str(angle_x));
-    Serial1.print(", P=");
+    // Serial1.print("angle_x=");
+    // Serial1.print(float2str(angle_x));
+    /*Serial1.print(", P=");
     Serial1.print(float2str(KP * pid_err));
     Serial1.print(", D=");
-    Serial1.print(float2str(KD * pid_d_err));
-    Serial1.print(", pv=");
-    Serial1.print(float2str(pv));
+    Serial1.print(float2str(KD * pid_d_err));*/
+    Serial1.print("pv=");
+    Serial1.print(short2str((short) pv));
     Serial1.println();
 
-    float max_pv = 64;
+    float max_pv = 127;
     if (pv > max_pv) {
         pv = max_pv;
     } else if (pv < -max_pv) {
@@ -166,7 +166,7 @@ void loop() {
 
     // run pwm motor
     mx1508_left_run(pv);
-    mx1508_right_run(pv);
+    // mx1508_right_run(pv);
 }
 
 void _twi_init() {
@@ -239,7 +239,7 @@ void _tcb0_init() {
     _PORTF_DIR |= 0b00010000; // PF4: OUTPUT
     _TCB0_CCMPH = 0x00; // Duty
     _TCB0_CCMPL = 0xff; // TOP
-    _TCB0_CTRLA |= _TCB_CLKSEL_CLKDIV2_gc | _TCB_ENABLE_bm;
+    _TCB0_CTRLA = _TCB_CLKSEL_CLKDIV2_gc | _TCB_ENABLE_bm;
     _TCB0_CTRLB |= _TCB_CCMPEN_bm | _TCB_CNTMODE_PWM8_gc;
 }
 
@@ -262,7 +262,7 @@ void _tcb1_init() {
     _PORTF_DIR |= 0b00100000; // PF5: OUTPUT
     _TCB1_CCMPH = 0x00; // Duty
     _TCB1_CCMPL = 0xff; // TOP
-    _TCB1_CTRLA |= _TCB_CLKSEL_CLKDIV2_gc | _TCB_ENABLE_bm;
+    _TCB1_CTRLA = _TCB_CLKSEL_CLKDIV2_gc | _TCB_ENABLE_bm;
     _TCB1_CTRLB |= _TCB_CCMPEN_bm | _TCB_CNTMODE_PWM8_gc;
 }
 
@@ -332,20 +332,20 @@ void mx1508_init() {
 void mx1508_left_run(float power) {
     if (power >= 0) {
         _tcb0_default_pin();
-        _tcb0_set_duty((unsigned char) power);
+        _tcb0_set_duty(((unsigned char) power) + 128);
     } else {
         _tcb0_alt_pin();
-        _tcb0_set_duty((unsigned char) -power);
+        _tcb0_set_duty(((unsigned char) -power) + 128);
     }
 }
 
 void mx1508_right_run(float power) {
     if (power >= 0) {
         _tcb1_default_pin();
-        _tcb1_set_duty((unsigned char) power);
+        _tcb1_set_duty(((unsigned char) power) + 128);
     } else {
         _tcb1_alt_pin();
-        _tcb1_set_duty((unsigned char) -power);
+        _tcb1_set_duty(((unsigned char) -power) + 128);
     }
 }
 
