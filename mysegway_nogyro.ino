@@ -319,36 +319,31 @@ void mx1508_init() {
     _tcb1_init();
 }
 
-unsigned char mx1508_map(float power) { // -float ~ float -> +-128 ~ +-255
-    if (power >= 0) {
-        if (power > 127) {
-            return 255;
-        }
-        return ((unsigned char) power) + 127;
-    } else {
-        if (power < -127) {
-            return -127;
-        }
-        return ((unsigned char) power) - 127;
+unsigned char mx1508_map(float power) { // -float ~ float -> +152(+3V) ~ +255(+5V)
+    if (power < 0) {
+        power = -power;
     }
+    power += 152;
+    if (power > 255) {
+        power = 255;
+    }
+    return (unsigned char) power;
 }
 
 void mx1508_left_run(float power) {
     if (power >= 0) {
         _tcb0_default_pin();
-        _tcb0_set_duty(mx1508_map(power));
     } else {
         _tcb0_alt_pin();
-        _tcb0_set_duty(mx1508_map(power));
     }
+    _tcb0_set_duty(mx1508_map(power));
 }
 
 void mx1508_right_run(float power) {
     if (power >= 0) {
         _tcb1_default_pin();
-        _tcb1_set_duty(mx1508_map(power));
     } else {
         _tcb1_alt_pin();
-        _tcb1_set_duty(mx1508_map(power));
     }
+    _tcb1_set_duty(mx1508_map(power));
 }
