@@ -64,7 +64,7 @@
 #define MPU6050_CLOCK_PLL_XGYRO_bm 0b00000001
 
 #define PI 3.141592
-#define KP 20.0
+#define KP 5.0
 #define KD 1.5
 
 // #define MPU6050_ACC_RANGE 16384
@@ -141,7 +141,7 @@ void loop() {
     float pid_err = sp - angle_x;
     // float pid_d_err = (pid_err - pid_prev_err) / dt;
     pid_prev_err = pid_err;
-    float pv = KP * pid_err + KD; //* pid_d_err;
+    float pv = KP * pid_err;// + KD; * pid_d_err;
 
     // debug
     // Serial1.print("angle_x=");
@@ -150,13 +150,13 @@ void loop() {
     Serial1.print(float2str(KP * pid_err));
     Serial1.print(", D=");
     Serial1.print(float2str(KD * pid_d_err));*/
-    Serial1.print("pv=");
+    /*Serial1.print("pv=");
     Serial1.print(short2str((short) pv));
-    Serial1.println();
+    Serial1.println();*/
 
     // run pwm motor
     mx1508_left_run(pv);
-    // mx1508_right_run(pv);
+    mx1508_right_run(pv);
 }
 
 void _twi_init() {
@@ -227,6 +227,8 @@ bool _twi_write(unsigned char data) {
 void _tcb0_init() {
     _PORTA_DIR |= 0b00000100; // PA2: OUTPUT
     _PORTF_DIR |= 0b00010000; // PF4: OUTPUT
+    _PORTA_OUT &= ~0b00000100; // PA2: LOW
+    _PORTF_OUT &= ~0b00010000; // PF4: LOW
     _TCB0_CCMPH = 0x00; // Duty
     _TCB0_CCMPL = 0xff; // TOP
     _TCB0_CTRLA = _TCB_CLKSEL_CLKDIV2_gc | _TCB_ENABLE_bm;
@@ -235,12 +237,10 @@ void _tcb0_init() {
 
 void _tcb0_default_pin() {
     _PORTMUX_TCBROUTEA &= ~_PORTMUX_TCB0_ALT1_gc;
-    _PORTF_OUT &= ~0b00010000; // PF4: LOW
 }
 
 void _tcb0_alt_pin() {
     _PORTMUX_TCBROUTEA |= _PORTMUX_TCB0_ALT1_gc;
-    _PORTA_OUT &= ~0b00000100; // PA2: LOW
 }
 
 void _tcb0_set_duty(unsigned char duty) {
@@ -250,6 +250,8 @@ void _tcb0_set_duty(unsigned char duty) {
 void _tcb1_init() {
     _PORTA_DIR |= 0b00001000; // PA3: OUTPUT
     _PORTF_DIR |= 0b00100000; // PF5: OUTPUT
+    _PORTA_OUT &= ~0b00001000; // PA3: LOW
+    _PORTF_OUT &= ~0b00100000; // PF5: LOW
     _TCB1_CCMPH = 0x00; // Duty
     _TCB1_CCMPL = 0xff; // TOP
     _TCB1_CTRLA = _TCB_CLKSEL_CLKDIV2_gc | _TCB_ENABLE_bm;
@@ -258,12 +260,10 @@ void _tcb1_init() {
 
 void _tcb1_default_pin() {
     _PORTMUX_TCBROUTEA &= ~_PORTMUX_TCB1_ALT1_gc;
-    _PORTF_OUT &= ~0b00100000; // PF5: LOW
 }
 
 void _tcb1_alt_pin() {
     _PORTMUX_TCBROUTEA |= _PORTMUX_TCB1_ALT1_gc;
-    _PORTA_OUT &= ~0b00001000; // PA3: LOW
 }
 
 void _tcb1_set_duty(unsigned char duty) {
@@ -320,14 +320,20 @@ void mx1508_init() {
 }
 
 unsigned char mx1508_map(float power) { // -float ~ float -> +152(+3V) ~ +255(+5V)
-    if (power < 0) {
-        power = -power;
+    int p = power;
+    if (-5 < p && p < 5) {
+        digitalWrite(7, HIGH);
+    } else {
+        digitalWrite(7, LOW);
     }
-    power += 152;
-    if (power > 255) {
-        power = 255;
+    if (p < 0) {
+        p = -p;
     }
-    return (unsigned char) power;
+    p += 158;
+    if (p > 255) {
+        p = 255;
+    }
+    return (unsigned char) p;
 }
 
 void mx1508_left_run(float power) {
