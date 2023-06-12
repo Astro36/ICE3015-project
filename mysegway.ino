@@ -70,12 +70,6 @@
 #define KD 8.0
 #define DT 0.2534
 
-// #define MPU6050_ACC_RANGE 16384
-// #define MPU6050_GYRO_CONFIG 0x1b
-// #define MPU6050_GYRO_FS_250_bm 0b00000000
-// #define MPU6050_ACCEL_CONFIG 0x1c
-// #define MPU6050_ACCEL_FS_2 0b00000000
-
 void _twi_init();
 bool _twi_start(unsigned char device, bool read);
 void _twi_stop();
@@ -96,38 +90,19 @@ void mpu6050_fetch(short* raw_ax, short* raw_ay, short* raw_az, short* raw_gx, s
 
 void mx1508_init();
 unsigned char mx1508_map(float power);
-void mx1508_left_run(); // 모터 드라이버 속도 제어
-void mx1508_right_run(); // 모터 드라이버 속도 제어
+void mx1508_left_run();
+void mx1508_right_run();
 
 short mpu6050_offsets[6];
-unsigned long previous_millis;
-float angle_ax = 0, angle_gx = 0, angle_x = 0;
-float pid_prev_err, pid_i_err = 0;
-
-char debug[7];
-
-char* float2str(float i) {
-    sprintf(debug, "%6d/1000", (int) i * 1000);
-    return debug;
-}
-
-char* short2str(short i) {
-    sprintf(debug, "%6d", i);
-    return debug;
-}
+float angle_gx = 0, angle_x = 0;
+float pid_prev_err = 0, pid_i_err = 0;
 
 void setup() {
-    Serial1.begin(9600); // debug
     mpu6050_init();
     mx1508_init();
 }
 
 void loop() {
-    // calculate `dt`
-    // unsigned long now = millis();
-    // float dt = (now - previous_millis) / 1000.0; // [sec]
-    // previous_millis = now;
-
     // fetch sensor data
     short raw_ax, raw_ay, raw_az, raw_gx, raw_gy, raw_gz;
     mpu6050_fetch(&raw_ax, &raw_ay, &raw_az, &raw_gx, &raw_gy, &raw_gz);
@@ -136,16 +111,16 @@ void loop() {
     float ax = raw_ax - mpu6050_offsets[0];
     float ay = raw_ay - mpu6050_offsets[1];
     float az = raw_az - mpu6050_offsets[2];
-    angle_ax = atan(ay / sqrt(ax * ax + az * az)) * (180 / PI);
+    float angle_ax = atan(ay / sqrt(ax * ax + az * az)) * (180 / PI);
 
-    float gz = ((float) raw_gx - mpu6050_offsets[3]) / 131;
+    float gz = ((float) (raw_gx - mpu6050_offsets[3])) / 131;
     // angle_gx += gz * DT;
 
     // complementary filter
-    angle_x = ALPHA * (angle_x + gz * DT) + (1 - ALPHA) * angle_ax; // use only `angle_x`
+    angle_x = ALPHA * (angle_x + gz * DT) + (1 - ALPHA) * angle_ax;
 
     // pid controller
-    float sp = 0; // setpoint; fetch from HC-SR04
+    float sp = 0; // setpoint
     float pid_err = sp - angle_x;
     pid_i_err += pid_err;
     if (pid_i_err > 10.0) {
@@ -156,18 +131,6 @@ void loop() {
     float pid_d_err = pid_prev_err - pid_err;
     pid_prev_err = pid_err;
     float pv = KP * pid_err + KI * pid_i_err + KD * pid_d_err;
-
-    // debug
-    /*Serial1.print("pid_i_err=");
-    Serial1.print(float2str(pid_d_err));
-    Serial1.println();*/
-    /*Serial1.print(", P=");
-    Serial1.print(float2str(KP * pid_err));
-    Serial1.print(", D=");
-    Serial1.print(float2str(KD * pid_d_err));*/
-    /*Serial1.print("pv=");
-    Serial1.print(short2str((short) pv));
-    Serial1.println();*/
 
     // run pwm motor
     mx1508_left_run(pv);
@@ -336,11 +299,6 @@ void mx1508_init() {
 
 unsigned char mx1508_map(float power) { // -float ~ float -> +159(+3V) ~ +255(+5V)
     int p = power;
-    if (-5 < p && p < 5) {
-        digitalWrite(7, HIGH);
-    } else {
-        digitalWrite(7, LOW);
-    }
     if (p < 0) {
         p = -p;
     }
