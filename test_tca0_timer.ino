@@ -20,9 +20,12 @@ void setup() {
 }
 
 void loop() {
-    unsigned int T = 5; // [s]
+    unsigned int T = 3; // [s]
     if (t == T * F_CPU / 65536) { // T * F_CPU / (DIV * (PERIOD + 1))
-        Serial1.println("5s");
+        Serial1.println("3s");
+        digitalWrite(7, HIGH);
+        delay(100);
+        digitalWrite(7, LOW);
         t = 0;
     }
 }
