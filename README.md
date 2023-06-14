@@ -6,10 +6,10 @@
 
 ## 실습 과제 (팀)
 
-- [과제1](./resource/homework/과제1_실습팀4.pdf)
-- [과제2](./resource/homework/과제1_실습팀4.pdf)
-- [과제3](./resource/homework/과제1_실습팀4.pdf)
-- [과제4](./resource/homework/과제1_실습팀4.pdf)
+- [과제1](./homework/과제1_실습팀4.pdf)
+- [과제2](./homework/과제2_실습팀4.pdf)
+- [과제3](./homework/과제3_실습팀4.pdf)
+- [과제4](./homework/과제4_실습팀4.pdf)
 
 ## 프로젝트 (개인)
 
