@@ -65,9 +65,10 @@
 
 #define PI 3.141592
 #define ALPHA 0.7
-#define KP 20.0
-#define KD 60.0
+#define KP 7.5
+#define KD 3.0
 #define DT 0.01
+#define MIN_DUTY 160
 
 void _twi_init();
 bool _twi_start(unsigned char device, bool read);
@@ -302,7 +303,7 @@ unsigned char mx1508_map(float power) { // -float ~ float -> +160(+3V) ~ +255(+6
     if (p < 0) {
         p = -p;
     }
-    p += 155;
+    p += MIN_DUTY;
     if (p > 255) {
         p = 255;
     }
