@@ -1,0 +1,136 @@
+(ExpressProject "ESD"
+  (ProjectVersion "19981106")
+  (ProjectType "PCB")
+  (Folder "Design Resources"
+    (Folder "Library"
+      (File ".\library3.olb"
+        (Type "Schematic Library")))
+    (NoModify)
+    (File ".\esd.dsn"
+      (Type "Schematic Design"))
+    (BuildFileAddedOrDeleted "x")
+    (CompileFileAddedOrDeleted "x")
+    (BOM_Scope "0")
+    (BOM_Mode "0")
+    (BOM_Report_File "C:\USERS\PSJ10\DOCUMENTS\ORCAD\ESD.BOM")
+    (BOM_Merge_Include "FALSE")
+    (BOM_Property_Combine_7.0 "{Item}\t{Quantity}\t{Reference}\t{Value}")
+    (BOM_Header "Item\tQuantity\tReference\tPart")
+    (BOM_Include_File "C:\USERS\PSJ10\DOCUMENTS\ORCAD\ESD.INC")
+    (BOM_Include_File_Combine_7.0 "{Item}\t{Quantity}\t{Reference}\t{Value}")
+    (BOM_One_Part_Per_Line "FALSE")
+    (Open_BOM_in_Excel "TRUE")
+    (BOM_View_Output "FALSE"))
+  (Folder "Outputs"
+    (File ".\esd.bom"
+      (Type "Report")))
+  (Folder "Referenced Projects")
+  (PartMRUSelector
+    (LM7805
+      (FullPartName "LM7805.Normal")
+      (LibraryName "C:\USERS\PSJ10\DOCUMENTS\ORCAD\LIBRARY3.OLB")
+      (DeviceIndex "0"))
+    (VCC_BAR
+      (LibraryName "C:\CADENCE\SPB_17.2\TOOLS\CAPTURE\LIBRARY\CAPSYM.OLB")
+      (DeviceIndex "0"))
+    (NP01S
+      (FullPartName "NP01S.Normal")
+      (LibraryName "C:\USERS\PSJ10\DOCUMENTS\ORCAD\LIBRARY3.OLB")
+      (DeviceIndex "0"))
+    (VDC
+      (FullPartName "VDC.Normal")
+      (LibraryName
+         "C:\CADENCE\SPB_17.2\TOOLS\CAPTURE\LIBRARY\PSPICE\SOURCE.OLB")
+      (DeviceIndex "0"))
+    (GND
+      (LibraryName "C:\CADENCE\SPB_17.2\TOOLS\CAPTURE\LIBRARY\CAPSYM.OLB")
+      (DeviceIndex "0"))
+    (SZHMDBL
+      (FullPartName "SZHMDBL.Normal")
+      (LibraryName "C:\USERS\PSJ10\DOCUMENTS\ORCAD\LIBRARY3.OLB")
+      (DeviceIndex "0"))
+    (HCSR04
+      (FullPartName "HCSR04.Normal")
+      (LibraryName "C:\USERS\PSJ10\DOCUMENTS\ORCAD\LIBRARY3.OLB")
+      (DeviceIndex "0"))
+    (GY521
+      (FullPartName "GY521.Normal")
+      (LibraryName "C:\USERS\PSJ10\DOCUMENTS\ORCAD\LIBRARY3.OLB")
+      (DeviceIndex "0"))
+    (ATmega4809
+      (FullPartName "ATmega4809.Normal")
+      (LibraryName "C:\USERS\PSJ10\DOCUMENTS\ORCAD\LIBRARY3.OLB")
+      (DeviceIndex "0")))
+  (GlobalState
+    (FileView
+      (Path "Design Resources")
+      (Path "Design Resources" "c:\users\psj10\documents\orcad\esd.dsn")
+      (Path "Design Resources" "c:\users\psj10\documents\orcad\esd.dsn"
+         "SCHEMATIC1")
+      (Path "Design Resources" "c:\users\psj10\documents\orcad\esd.dsn"
+         "Design Cache")
+      (Path "Design Resources" "Library")
+      (Path "Design Resources" "Library"
+         "c:\users\psj10\documents\orcad\library3.olb")
+      (Path "Outputs"))
+    (HierarchyView)
+    (Doc
+      (Type "COrCapturePMDoc")
+      (Frame
+        (Placement "44 2 3 -1 -1 -8 -31 0 200 0 243"))
+      (Tab 0))
+    (Doc
+      (Type "COrSchematicDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -8 -31 0 1100 0 282")
+        (Scroll "0 202")
+        (Zoom "72")
+        (Occurrence "/"))
+      (Path "C:\USERS\PSJ10\DOCUMENTS\ORCAD\ESD.DSN")
+      (Schematic "SCHEMATIC1")
+      (Page "PAGE1"))
+    (Doc
+      (Type "COrPrmBrowserDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -8 -31 78 1204 78 307"))
+      (Path "C:\USERS\PSJ10\DOCUMENTS\ORCAD\LIBRARY3.OLB")
+      (Package "GY521")
+      (PartType "1"))
+    (Doc
+      (Type "COrPrmBrowserDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -8 -31 0 1126 0 229"))
+      (Path "C:\USERS\PSJ10\DOCUMENTS\ORCAD\LIBRARY3.OLB")
+      (Package "HCSR04")
+      (PartType "1"))
+    (Doc
+      (Type "COrPrmBrowserDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -8 -31 26 1152 26 255"))
+      (Path "C:\USERS\PSJ10\DOCUMENTS\ORCAD\LIBRARY3.OLB")
+      (Package "SZHMDBL")
+      (PartType "1"))
+    (Doc
+      (Type "COrPrmBrowserDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -8 -31 52 1178 52 281"))
+      (Path "C:\USERS\PSJ10\DOCUMENTS\ORCAD\LIBRARY3.OLB")
+      (Package "NP01S")
+      (PartType "1"))
+    (Doc
+      (Type "COrPrmBrowserDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -8 -31 78 1204 78 307"))
+      (Path "C:\USERS\PSJ10\DOCUMENTS\ORCAD\LIBRARY3.OLB")
+      (Package "ATMEGA4809")
+      (PartType "1"))
+    (Doc
+      (Type "COrPrmBrowserDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -8 -31 104 1204 104 378"))
+      (Path "C:\USERS\PSJ10\DOCUMENTS\ORCAD\LIBRARY3.OLB")
+      (Package "LM7805")
+      (PartType "1")))
+  (MPSSessionName "psj1026")
+  (LastUsedLibraryBrowseDirectory
+     "C:\Cadence\SPB_17.2\tools\capture\library\pspice"))
