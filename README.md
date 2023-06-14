@@ -62,6 +62,6 @@ OrCAD를 이용해 회로 작성: [circuit.pdf](./esource/orcad/circuit.pdf)
 
 ### 프로젝트 발표
 
-- [`프로젝트 제안서`](./resource/project_proposal.pdf)
-- [`프로젝트 중간발표`](./resource/project_interim.pdf)
-- [`프로젝트 최종발표`](./resource/project_final.pdf)
+- [프로젝트 제안서](./resource/project_proposal.pdf)
+- [프로젝트 중간발표](./resource/project_interim.pdf)
+- [프로젝트 최종발표](./resource/project_final.pdf)
