@@ -64,11 +64,10 @@
 #define MPU6050_CLOCK_PLL_XGYRO_bm 0b00000001
 
 #define PI 3.141592
-#define ALPHA 0.6
-#define KP 10.0
-#define KI 1.5
-#define KD 8.0
-#define DT 0.2534
+#define ALPHA 0.7
+#define KP 20.0
+#define KD 60.0
+#define DT 0.01
 
 void _twi_init();
 bool _twi_start(unsigned char device, bool read);
@@ -100,6 +99,7 @@ float pid_prev_err = 0, pid_i_err = 0;
 void setup() {
     mpu6050_init();
     mx1508_init();
+    // Serial1.begin(9600);
 }
 
 void loop() {
@@ -122,15 +122,11 @@ void loop() {
     // pid controller
     float sp = 0; // setpoint
     float pid_err = sp - angle_x;
-    pid_i_err += pid_err;
-    if (pid_i_err > 10.0) {
-        pid_i_err = 10.0;
-    } else if (pid_i_err < -10.0) {
-        pid_i_err = -10.0;
-    }
     float pid_d_err = pid_prev_err - pid_err;
     pid_prev_err = pid_err;
-    float pv = KP * pid_err + KI * pid_i_err + KD * pid_d_err;
+    float pv = KP * pid_err + KD * pid_d_err;
+
+    // Serial1.println(pv);
 
     // run pwm motor
     mx1508_left_run(pv);
@@ -258,7 +254,11 @@ void mpu6050_init() {
 
     // init sensor offset
     short sum[6] = { 0 };
-    for (int i = 0; i < 10; i += 1) {
+    for (int i = 0; i < 30; i += 1) { // drop first 30 values
+        short raw_ax, raw_ay, raw_az, raw_gx, raw_gy, raw_gz;
+        mpu6050_fetch(&raw_ax, &raw_ay, &raw_az, &raw_gx, &raw_gy, &raw_gz);
+    }
+    for (int i = 0; i < 20; i += 1) {
         short raw_ax, raw_ay, raw_az, raw_gx, raw_gy, raw_gz;
         mpu6050_fetch(&raw_ax, &raw_ay, &raw_az, &raw_gx, &raw_gy, &raw_gz);
         sum[0] += raw_ax;
@@ -270,7 +270,7 @@ void mpu6050_init() {
     }
 
     for (int i = 0; i < 6; i += 1) {
-        mpu6050_offsets[i] = sum[i] / 10;
+        mpu6050_offsets[i] = sum[i] / 20;
     }
 }
 
@@ -297,12 +297,12 @@ void mx1508_init() {
     _tcb1_init();
 }
 
-unsigned char mx1508_map(float power) { // -float ~ float -> +159(+3V) ~ +255(+5V)
+unsigned char mx1508_map(float power) { // -float ~ float -> +160(+3V) ~ +255(+6V)
     int p = power;
     if (p < 0) {
         p = -p;
     }
-    p += 159;
+    p += 155;
     if (p > 255) {
         p = 255;
     }
