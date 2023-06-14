@@ -1,5 +1,4 @@
-// F_CPU = 16MHz
-#define F_CPU 16000000UL
+#define F_CPU 16000000
 
 void setup() {
     Serial1.begin(9600);
@@ -10,6 +9,5 @@ void loop() {
     delay(1000);
     digitalWrite(7, LOW);
     delay(1000);
-
-    Serial1.println("123");
+    Serial1.println("hello");
 }
