@@ -65,3 +65,14 @@ OrCAD를 이용해 회로 작성: [circuit.pdf](./esource/orcad/circuit.pdf)
 - [프로젝트 제안서](./resource/project_proposal.pdf)
 - [프로젝트 중간발표](./resource/project_interim.pdf)
 - [프로젝트 최종발표](./resource/project_final.pdf)
+
+### 프로젝트 연구일지
+
+- [자이로가속도센서 브레드보드 조립](./resource/project_note_0512.pdf)
+- [I2C를 이용한 자이로가속도 센서 값 인식](./resource/project_note_0518.pdf)
+- [PWM 출력 이슈 해결](./resource/project_note_0524.pdf.pdf)
+- [1차 밸런싱 로봇 조립](./resource/project_note_0527.pdf.pdf)
+- [TCA0를 이용한 millis 구현](./resource/project_note_0604.pdf)
+- [만능기판 납땜 진행](./resource/project_note_0609.pdf)
+- [만능기판 납땜 완료](./resource/project_note_0612.pdf)
+- [레귤레이터와 배터리 장착, 그리고 전원 불안정](./resource/project_note_0613.pdf)
