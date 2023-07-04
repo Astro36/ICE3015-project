@@ -76,3 +76,9 @@ OrCAD를 이용해 회로 작성: [circuit.pdf](./esource/orcad/circuit.pdf)
 - [만능기판 납땜 진행](./resource/project_note_0609.pdf)
 - [만능기판 납땜 완료](./resource/project_note_0612.pdf)
 - [레귤레이터와 배터리 장착, 그리고 전원 불안정](./resource/project_note_0613.pdf)
+
+### 프로젝트 관련 포스트
+
+- [네모난 보드속에 피어난 How is the life? 아두이노 setup과 loop의 동작 원리](https://int-i.github.io/cpp/2023-03-17/arudino-setup-loop/)
+- [흔들리는 센서 속에서 네 노이즈가 느껴진거야: MPU6050과 상보필터](https://int-i.github.io/cpp/2023-06-24/mpu6050-complementary-filter/)
+- [나는 부름을 받았고, 응해야 하오... 언제든. 인터럽트와 ISR (with TCA)](https://int-i.github.io/cpp/2023-07-04/arduino-interrupt/)
